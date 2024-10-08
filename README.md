@@ -1,5 +1,5 @@
 # K8s Logs Streamer
-Stream logs from pods selected namespaces on a k8s cluster via web sockets
+Stream logs from pods in selected namespaces on a k8s cluster via web socket
 
 
 Before you start:
