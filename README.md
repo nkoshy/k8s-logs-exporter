@@ -1,4 +1,4 @@
-# k8s-logs-exporter
+# K8s Logs Streamer
 Stream logs from pods selected namespaces on a k8s cluster via web sockets
 
 
