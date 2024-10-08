@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-logs-viewer
+  namespace: logsexporter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-logs-viewer
+  template:
+    metadata:
+      labels:
+        app: pod-logs-viewer
+    spec:
+      serviceAccountName: pod-logs-viewer-sa
+      containers:
+        - name: pod-logs-viewer
+          image: myrepo/k8s-pod-logs-exporter:latest  # Replace with your image
+          ports:
+            - containerPort: 80
+          env:
+            - name: ALLOWED_NAMESPACES
+              valueFrom:
+                configMapKeyRef:
+                  name: pod-logs-viewer-config
+                  key: ALLOWED_NAMESPACES
+

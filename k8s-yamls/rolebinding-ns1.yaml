@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: pod-logs-viewer-rolebinding1
+  namespace: testns1  # The namespace where pods are located
+subjects:
+  - kind: ServiceAccount
+    name: pod-logs-viewer-sa
+    namespace: logsexporter  # Namespace where the ServiceAccount is located
+roleRef:
+  kind: ClusterRole
+  name: pod-logs-viewer-clusterrole
+  apiGroup: rbac.authorization.k8s.io
+

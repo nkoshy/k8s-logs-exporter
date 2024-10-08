@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kubernetes Pod Logs Viewer - Staging Env.</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        select {
+            padding: 5px;
+            font-size: 16px;
+        }
+        #logs {
+            width: 100%;
+            height: 500px;
+            resize: none;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            overflow-y: scroll;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+        #footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #888;
+        }
+        .loader {
+            border: 6px solid #f3f3f3; /* Light grey */
+            border-top: 6px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .status {
+            display: none;
+            margin-left: 10px;
+            color: #888;
+            font-style: italic;
+        }
+        .status.visible {
+            display: inline;
+        }
+        .select-wrapper {
+            display: inline-block;
+            position: relative;
+        }
+        .select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 10px;
+            top: calc(50% - 7px);
+            pointer-events: none;
+            color: #888;
+        }
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 30px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+    </style>
+    <script>
+        var ws;
+
+        function updatePods() {
+            const namespace = document.getElementById("namespace").value;
+            document.getElementById("logs").value = "";
+            showLoader('Loading pods...');
+            fetch(`/pods?namespace=${namespace}`)
+                .then(response => response.json())
+                .then(pods => {
+                    hideLoader();
+                    const podSelect = document.getElementById("pod");
+                    podSelect.innerHTML = "";
+                    pods.forEach(pod => {
+                        const option = document.createElement("option");
+                        option.value = pod;
+                        option.text = pod;
+                        podSelect.appendChild(option);
+                    });
+                    connectWebSocket();
+                })
+                .catch(error => {
+                    hideLoader();
+                    alert("Error fetching pods: " + error);
+                });
+        }
+
+        function connectWebSocket() {
+            const namespace = document.getElementById("namespace").value;
+            const pod = document.getElementById("pod").value;
+
+            if (ws) {
+                ws.close();
+            }
+
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            ws = new WebSocket(`${protocol}://${window.location.host}/ws/logs`);
+
+            ws.onopen = function() {
+                ws.send(JSON.stringify({
+                    "namespace": namespace,
+                    "pod": pod
+                }));
+                document.getElementById("logs").value = ""; // Clear previous logs
+                showStatus(`Connected to pod: ${pod}`);
+            };
+
+            ws.onmessage = function(event) {
+                const logsTextarea = document.getElementById("logs");
+                logsTextarea.value += event.data + "\n";
+                logsTextarea.scrollTop = logsTextarea.scrollHeight;
+            };
+
+            ws.onclose = function() {
+                console.log("WebSocket connection closed");
+                showStatus("Connection closed");
+            };
+
+            ws.onerror = function(error) {
+                console.error("WebSocket error:", error);
+                showStatus("Error occurred");
+            };
+        }
+
+        function showLoader(message) {
+            const loader = document.getElementById("loader");
+            const statusMessage = document.getElementById("statusMessage");
+            loader.style.display = "inline-block";
+            statusMessage.textContent = message;
+            statusMessage.classList.add("visible");
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById("loader");
+            const statusMessage = document.getElementById("statusMessage");
+            loader.style.display = "none";
+            statusMessage.classList.remove("visible");
+        }
+
+        function showStatus(message) {
+            const statusMessage = document.getElementById("statusMessage");
+            statusMessage.textContent = message;
+            statusMessage.classList.add("visible");
+            setTimeout(() => {
+                statusMessage.classList.remove("visible");
+            }, 5000);
+        }
+
+        window.onload = function() {
+            updatePods();
+            document.getElementById("namespace").addEventListener("change", updatePods);
+            document.getElementById("pod").addEventListener("change", connectWebSocket);
+        };
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Kubernetes Pod Logs Viewer - Staging Env.</h1>
+        <div class="form-group">
+            <label for="namespace">Namespace:</label>
+            <div class="select-wrapper">
+                <select id="namespace">
+                    {% for ns in namespaces %}
+                        <option value="{{ ns }}">{{ ns }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="pod">Pod:</label>
+            <div class="select-wrapper">
+                <select id="pod">
+                </select>
+            </div>
+            <div id="loader" class="loader"></div>
+            <span id="statusMessage" class="status"></span>
+        </div>
+        <div class="form-group">
+            <label for="logs">Logs:</label><br/>
+            <textarea id="logs" readonly></textarea>
+        </div>
+        <div id="footer">
+            &copy; {{ current_year }} Kubernetes Pod Logs Viewer
+        </div>
+    </div>
+</body>
+</html>

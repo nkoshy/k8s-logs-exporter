@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pod-logs-viewer-ingress
+  namespace: logsexporter
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-realm: Authentication Required
+    nginx.ingress.kubernetes.io/auth-secret: basic-auth #for enabling basic authentication to your app
+    nginx.ingress.kubernetes.io/auth-type: basic
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - logviewer.log.com  #update your domain here
+      secretName: logviewer-tls
+  rules:
+    - host: logviewer.log.com  #update your domain here
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: pod-logs-viewer-service
+                port:
+                  number: 80
+

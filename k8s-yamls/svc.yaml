@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: pod-logs-viewer-service
+  namespace: logsexporter
+spec:
+  selector:
+    app: pod-logs-viewer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+
