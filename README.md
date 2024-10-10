@@ -4,7 +4,7 @@ Stream logs from pods in selected namespaces on a Kubernetes cluster via WebSock
 
 ## Overview
 
-K8s Logs Streamer is a tool designed to facilitate real-time log streaming from pods in specified namespaces within a Kubernetes cluster. This project leverages WebSocket technology to provide a seamless and efficient log streaming experience.
+K8s Logs Streamer is a tool designed to facilitate real-time log streaming from pods in specified namespaces within a Kubernetes cluster. This project leverages WebSocket and a simple UI that provide a seamless and efficient log streaming experience.
 
 ## Prerequisites
 
