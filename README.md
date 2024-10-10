@@ -1,6 +1,6 @@
 # K8s Logs Streamer
 
-Stream logs from pods in selected namespaces on a Kubernetes cluster via WebSocket.
+Stream logs from pods in selected namespaces on a Kubernetes cluster over WebSocket.
 
 ## Overview
 
